@@ -18,7 +18,12 @@ const db = low(adapter);
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allows all origins (including your local HTML file and Shopify)
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
+}));
+
 app.use(bodyParser.json());
 
 // 1. Health Check (Required for Render to show "Live")
