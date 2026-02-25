@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review App Functionality Test</title>
+    <style>
+        /* KEEPING YOUR EXACT DESIGN */
+        .nector-alt-container { padding: 40px 20px; background: #f9fbf7; font-family: sans-serif; }
+        .nector-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e1e8db; padding-bottom: 20px; margin-bottom: 30px; }
+        .nector-stars { color: #8cb678; font-size: 24px; margin-right: 10px; }
+        .nector-write-btn { background: #8cb678; color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .nector-write-btn:hover { background: #719a5f; }
+
+        /* Modal Overlay */
+        .nector-modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 999999; display: none; align-items: center; justify-content: center; }
+        .nector-modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; position: relative; }
+        .nector-close { position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer; color: #aaa; }
+        
+        /* Form Elements */
+        #nector-form input, #nector-form textarea, #nector-form select { width: 100%; margin-top: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .rev-input-group { margin-top: 15px; }
+        .nector-submit-btn { width: 100%; background: #8cb678; color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+
+        /* Grid Layout */
+        .nector-grid { column-count: 4; column-gap: 20px; }
+        .nector-card { break-inside: avoid; background: white; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .nector-card img { width: 100%; height: auto; display: block; }
+        .card-inner { padding: 15px; }
+        .verified-tag { color: #8cb678; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+
+        @media (max-width: 900px) { .nector-grid { column-count: 2; } }
+        @media (max-width: 600px) { .nector-grid { column-count: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="nector-alt-container">
+    <div class="nector-header">
+        <div class="nector-stats">
+            <span class="nector-stars">★★★★★</span>
+            <span id="nector-count-text">Connecting to server...</span>
+        </div>
+        <button type="button" class="nector-write-btn" id="open-review-modal">Write A Review</button>
+    </div>
+
+    <div id="nector-modal" class="nector-modal-overlay">
+        <div class="nector-modal-content">
+            <span class="nector-close" id="close-modal">&times;</span>
+            <h3>Write a Review</h3>
+            <div id="nector-form">
+                <input type="text" id="rev-name" placeholder="Your Name" required>
+                <textarea id="rev-text" placeholder="What did you think?" required></textarea>
+                <div class="rev-input-group">
+                    <label>Rating:</label>
+                    <select id="rev-rating">
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
+                    </select>
+                </div>
+                <input type="url" id="rev-image" placeholder="Image URL (optional)">
+                <button type="button" id="submit-nector-rev" class="nector-submit-btn">Post Review Now</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="nector-grid" class="nector-grid"></div>
+</div>
+
+<script>
+    // HARDCODED SETTINGS FOR TESTING
+    const API_BASE = 'https://shopify-review-app-w7ny.onrender.com';
+    const TEST_PID = "123456789"; 
+
+    const modal = document.getElementById('nector-modal');
+    const openBtn = document.getElementById('open-review-modal');
+    const closeBtn = document.getElementById('close-modal');
+    const submitBtn = document.getElementById('submit-nector-rev');
+
+    // --- MODAL LOGIC ---
+    openBtn.onclick = () => { modal.style.display = 'flex'; };
+    closeBtn.onclick = () => { modal.style.display = 'none'; };
+    window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
+
+    // --- FETCH ALL REVIEWS ---
+    async function loadAllReviews() {
+        try {
+            console.log("Fetching from:", `${API_BASE}/api/all-reviews`);
+            const res = await fetch(`${API_BASE}/api/all-reviews`);
+            if (!res.ok) throw new Error("Server response error");
+            
+            const data = await res.json();
+            document.getElementById('nector-count-text').innerText = `${data.length} Total Reviews`;
+            
+            const grid = document.getElementById('nector-grid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = "<p style='text-align:center; width:100%; color:#999;'>Server is empty. Add the first review!</p>";
+                return;
+            }
+
+            data.reverse().forEach(item => {
+                const card = `
+                    <div class="nector-card">
+                        ${item.image_url ? `<img src="${item.image_url}">` : ''}
+                        <div class="card-inner">
+                            <div style="font-weight:bold">${item.author} <span class="verified-tag">✓ Verified</span></div>
+                            <div style="color:#8cb678; margin: 5px 0;">${"★".repeat(item.rating)}</div>
+                            <p style="font-size:14px; color:#444;">${item.text}</p>
+                            <small style="color:#999; font-size:11px;">${item.date || 'Today'}</small>
+                        </div>
+                    </div>`;
+                grid.insertAdjacentHTML('beforeend', card);
+            });
+        } catch (err) {
+            document.getElementById('nector-count-text').innerText = "Server Sleeping... Wait 30s";
+            console.error(err);
+        }
+    }
+
+    // --- SUBMIT LOGIC ---
+    submitBtn.onclick = async () => {
+        const payload = {
+            product_id: TEST_PID,
+            author: document.getElementById('rev-name').value,
+            text: document.getElementById('rev-text').value,
+            rating: document.getElementById('rev-rating').value,
+            image_url: document.getElementById('rev-image').value
+        };
+
+        if (!payload.author || !payload.text) return alert("Please fill fields");
+
+        submitBtn.innerText = "Posting...";
+        submitBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_BASE}/api/reviews`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                modal.style.display = 'none';
+                loadAllReviews(); // Refresh grid
+            } else {
+                alert("Submit failed. Check Render Logs.");
+            }
+        } catch (e) {
+            alert("Error: Server might be asleep.");
+        } finally {
+            submitBtn.innerText = "Post Review Now";
+            submitBtn.disabled = false;
+        }
+    };
+
+    // Initial Load
+    loadAllReviews();
+</script>
+
+</body>
+</html>
