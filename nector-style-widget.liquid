@@ -1,0 +1,95 @@
+<div class="custom-app-wrapper">
+  <div class="summary-header">
+     <div class="summary-top">
+       <span class="main-stars">★★★★★</span>
+       <span class="total-count" id="review-count">0 Reviews</span>
+       <button class="write-btn" onclick="toggleForm()">Write A Review</button>
+     </div>
+     
+     <div id="submission-form" class="review-form-container" style="display:none;">
+       <input type="text" id="form-name" placeholder="Your Name">
+       <textarea id="form-text" placeholder="Share your experience..."></textarea>
+       <input type="number" id="form-rating" min="1" max="5" value="5">
+       <input type="url" id="form-image" placeholder="Image URL (e.g. from ImgBB)">
+       <button onclick="submitReview()">Submit Review</button>
+     </div>
+  </div>
+
+  <div id="review-masonry" class="masonry-grid">
+    </div>
+</div>
+
+<style>
+  .custom-app-wrapper { background: #f3f6ef; padding: 20px; font-family: sans-serif; }
+  .summary-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .main-stars { color: #8cb678; font-size: 24px; }
+  .write-btn { background: #8cb678; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+  
+  .review-form-container { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd; }
+  .review-form-container input, .review-form-container textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
+
+  .masonry-grid { column-count: 4; column-gap: 15px; }
+  .review-card { break-inside: avoid; background: white; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; overflow: hidden; }
+  .review-card img { width: 100%; height: auto; display: block; }
+  .card-body { padding: 12px; }
+  .v-badge { background: #8cb678; color: white; font-size: 10px; padding: 2px 5px; border-radius: 3px; }
+  
+  @media (max-width: 768px) { .masonry-grid { column-count: 2; } }
+</style>
+
+<script>
+const SERVER_URL = 'https://nonmotoring-kamilah-propitiative.ngrok-free.dev'; // Change to your actual server URL later
+const PRODUCT_ID = "{{ product.id }}";
+
+function toggleForm() {
+  const form = document.getElementById('submission-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+// Fetch and Render Reviews
+async function loadReviews() {
+  const response = await fetch(`${SERVER_URL}/api/reviews/${PRODUCT_ID}`);
+  const reviews = await response.json();
+  
+  const grid = document.getElementById('review-masonry');
+  document.getElementById('review-count').innerText = `${reviews.length} Reviews`;
+  grid.innerHTML = '';
+
+  reviews.forEach(rev => {
+    const card = `
+      <div class="review-card">
+        ${rev.image_url ? `<img src="${rev.image_url}">` : ''}
+        <div class="card-body">
+          <div style="font-weight:bold">${rev.author} <span class="v-badge">Verified</span></div>
+          <div style="color:#8cb678">${"★".repeat(rev.rating)}</div>
+          <p style="font-size:13px">${rev.text}</p>
+          <small style="color:#999">${rev.date}</small>
+        </div>
+      </div>
+    `;
+    grid.insertAdjacentHTML('beforeend', card);
+  });
+}
+
+// Submit Review
+async function submitReview() {
+  const data = {
+    product_id: PRODUCT_ID,
+    author: document.getElementById('form-name').value,
+    text: document.getElementById('form-text').value,
+    rating: document.getElementById('form-rating').value,
+    image_url: document.getElementById('form-image').value
+  };
+
+  await fetch(`${SERVER_URL}/api/reviews`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  toggleForm();
+  loadReviews(); // Refresh grid
+}
+
+loadReviews();
+</script>
