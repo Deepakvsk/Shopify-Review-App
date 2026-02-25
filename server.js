@@ -57,6 +57,12 @@ app.post('/api/reviews', (req, res) => {
   res.status(201).json(newReview);
 });
 
+// 4. API: Get ALL reviews from the entire store
+app.get('/api/all-reviews', (req, res) => {
+  const allReviews = db.get('reviews').value();
+  res.json(allReviews || []);
+});
+
 // 4. Render Dynamic Port Binding
 // Render will inject the PORT environment variable automatically
 const PORT = process.env.PORT || 10000;
