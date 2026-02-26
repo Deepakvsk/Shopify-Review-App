@@ -1,3 +1,24 @@
 {
-  "reviews": []
+  "reviews": [
+    {
+      "id": "1",
+      "product_id": "PASTE_YOUR_ID_HERE",
+      "author": "Sarah M.",
+      "rating": 5,
+      "text": "Absolutely love this! The quality is amazing and it arrived so fast. Definitely recommend.",
+      "image_url": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=600",
+      "date": "February 20, 2026",
+      "status": "approved"
+    },
+    {
+      "id": "2",
+      "product_id": "PASTE_YOUR_ID_HERE",
+      "author": "James W.",
+      "rating": 4,
+      "text": "Great experience overall. The packaging was very premium.",
+      "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=600",
+      "date": "February 22, 2026",
+      "status": "approved"
+    }
+  ]
 }
